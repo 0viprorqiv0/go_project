@@ -49,6 +49,13 @@ func (s Session) Snapshot() Snapshot{
 }
 
 func (s *Session) AddCommand() error {
+	if s.closed{
+		return errors.New("session is closed")
+	}
 	s.commandCount++
 	return nil
+}
+
+func (s *Session) Close() {
+	s.closed = true
 }

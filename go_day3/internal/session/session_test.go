@@ -84,3 +84,61 @@ func newTestSession(t *testing.T) *session.Session{
 	}
 	return sess
 }
+
+func TestClosedSessionRejectsNewCommand(t *testing.T) {
+	sess := newTestSession(t)
+	if err := sess.AddCommand(); err != nil {
+		t.Fatalf("first AddCommand() error = %v", err)
+	}
+
+	sess.Close()
+	err := sess.AddCommand()
+	if err == nil {
+		t.Fatal("AddCommand() error = nil after Close, want an error")
+	}
+	if err.Error() != "session is closed"{
+		t.Fatalf("AddCommand() error= %q, want %q", err, "session is closed")
+	}
+
+	got := sess.Snapshot()
+	if !got.Closed {
+		t.Fatal("Closed = false after Close, want true")
+	}
+	if got.CommandCount != 1{
+		t.Fatalf("CommandCount = %d after rejected command, want 1", got.CommandCount)
+	}
+}
+
+func TestCloseIsIdempotent(t *testing.T) {
+	sess := newTestSession(t)
+
+	sess.Close()
+	sess.Close()
+
+	if !sess.Snapshot().Closed {
+		t.Fatal("Closed = false after two calls to Close, want true")
+	}
+}
+
+func TestSnapshotIsIndependentCopy(t *testing.T) {
+	sess := newTestSession(t)
+
+	copyOfState := sess.Snapshot()
+	copyOfState.Identity.ID = "changed"
+	copyOfState.Identity.SourceIP = "198.51.100.5"
+	copyOfState.CommandCount = 99
+	copyOfState.Closed = true
+	got := sess.Snapshot()
+	if got.Identity.ID != "sess-test" {
+		t.Fatalf("session Id changed through Snapshot: %q", got.Identity.ID)
+	}
+	if got.Identity.SourceIP != "192.0.2.10"{
+		t.Fatalf("session source IP changed through Snapshot: %q", got.Identity.SourceIP)
+	}
+	if got.CommandCount != 0{
+		t.Fatalf("session command count changed through Snapshot: %d", got.CommandCount)
+	}
+	if got.Closed{
+		t.Fatal("session was closed by changing Snapshot")
+	}
+}
