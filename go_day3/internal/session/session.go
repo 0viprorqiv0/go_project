@@ -13,6 +13,18 @@ type Session struct {
 	closed       bool
 }
 
+type Identity struct {
+	ID string
+	SourceIP string
+}
+
+type Snapshot struct {
+	Identity Identity
+	StartedAt time.Time
+	CommandCount int
+	Closed bool
+}
+
 func NewSession(id, sourceIP string, now time.Time) (*Session, error) {
 	if id == "" || sourceIP == "" {
 		return nil, errors.New("id and source IP are required")
@@ -22,4 +34,21 @@ func NewSession(id, sourceIP string, now time.Time) (*Session, error) {
 		sourceIP: sourceIP,
 		startedAt: now,
 	}, nil
+}
+
+func (s Session) Snapshot() Snapshot{
+	return Snapshot{
+		Identity: Identity{
+			ID: s.id,
+			SourceIP: s.sourceIP,
+		},
+		StartedAt: s.startedAt,
+		CommandCount: s.commandCount,
+		Closed: s.closed,
+	}
+}
+
+func (s *Session) AddCommand() error {
+	s.commandCount++
+	return nil
 }
