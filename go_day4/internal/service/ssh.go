@@ -8,23 +8,23 @@ import (
 	"honeypot-day4/internal/processor"
 )
 
-type HTTPService struct {
+type SSHService struct {
 	processor *processor.Processor
 }
 
-func NewHTTP(p *processor.Processor) *HTTPService {
-	return &HTTPService{processor: p}
+func NewSSH(p *processor.Processor) *SSHService {
+	return &SSHService{processor: p}
 }
 
-func (s *HTTPService) Name() string {
-	return "http"
+func (s *SSHService) Name() string {
+	return "ssh"
 }
 
-func (s *HTTPService) Start(ctx context.Context) error {
+func (s *SSHService) Start(ctx context.Context) error {
 	return s.processor.Process(ctx, &model.Event{
 		Service: s.Name(),
 		Message: "listener started",
 	})
 }
 
-var _ orchestration.Service = (*HTTPService)(nil)
+var _ orchestration.Service = (*SSHService)(nil)
